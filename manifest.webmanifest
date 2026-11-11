@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Sure Power Photo Report BETA",
+  "short_name": "Photo BETA",
+  "description": "BETA of the Sure Power Photo Report app: adds Binder / manual page capture. Separate storage from the main app. Works offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b2f4b",
+  "theme_color": "#e8730c",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

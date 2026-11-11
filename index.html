@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BETA · Photo Report</title>
+<meta name="theme-color" content="#1b2f4b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Photo Report">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Sure Power Photo Report. Offline field app: open reports, shoot and caption photos, send one PDF (+ HTML) per send. */
+:root{
+  --bg:#eef1f5; --plate:#fff; --steel:#dfe4ec; --line:#c3ccd8; --ink:#14202e; --muted:#566377;
+  --navy:#1b2f4b; --navy-2:#24406a; --navy-fg:#f2f5f9; --navy-muted:#a9bad0;
+  --amber:#c77700; --amber-bg:#fff3dc; --ok:#1f7a4d; --ok-bg:#e3f4ea; --bad:#b3261e; --bad-bg:#fbe5e3; --info:#2d5d9a; --info-bg:#e5eefa;
+  --f-display:"Barlow Condensed","Roboto Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  --f-mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f151d; --plate:#17202b; --steel:#222d3a; --line:#2f3c4c; --ink:#e6ebf1; --muted:#9aa7b8;
+  --navy:#0a1220; --navy-2:#16233a; --navy-fg:#e9eef5; --navy-muted:#93a6bf;
+  --amber:#f0a43a; --amber-bg:#3a2a10; --ok:#5cc792; --ok-bg:#12301f; --bad:#f08a80; --bad-bg:#3a1714; --info:#8ab4ee; --info-bg:#16263d; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--navy);color:var(--navy-fg);padding-top:env(safe-area-inset-top,0px);position:sticky;top:0;z-index:4}
+header.top .wrap{padding-block:12px;display:flex;align-items:center;gap:10px}
+header.top h1{margin:0;font:700 24px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header.top h1 span{color:var(--amber)}
+.hbtn{background:var(--navy-2);color:var(--navy-fg);border:0;border-radius:8px;padding:8px 12px;font-weight:600;font-size:15px;min-height:40px;cursor:pointer}
+main .wrap{padding-block:14px;display:grid;gap:12px}
+.card{background:var(--plate);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px}
+.card h2{margin:0;font:600 20px var(--f-display);text-transform:uppercase}
+.muted{color:var(--muted)} .small{font-size:13.5px}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:8px;padding:10px 14px;font-weight:600;font-size:15px;cursor:pointer;min-height:44px;text-align:center}
+.btn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.btn.amber{background:var(--amber);color:#1b1206} .btn.ok{background:var(--ok);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line)} .btn.bad{background:transparent;border:1px solid var(--bad);color:var(--bad)}
+.btn.wide{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.empty{background:var(--plate);border:1px dashed var(--line);border-radius:10px;padding:24px 16px;text-align:center;color:var(--muted);display:grid;gap:6px}
+.empty b{color:var(--ink);font:600 21px var(--f-display)}
+.rep{background:var(--plate);border:1px solid var(--line);border-left:6px solid var(--info);border-radius:10px;padding:12px;display:grid;gap:4px;cursor:pointer;text-align:left;width:100%}
+.rep .t{font:600 20px/1.15 var(--f-display)}
+.rep .m{font-size:13.5px;color:var(--muted)}
+.pill{display:inline-block;font:600 11px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:2px 7px;background:var(--info-bg);color:var(--info)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--amber-bg);color:var(--amber)}
+.types{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.type{border:1px solid var(--line);background:var(--plate);border-radius:10px;padding:12px;text-align:left;cursor:pointer;display:grid;gap:2px;min-height:76px}
+.type b{font:600 18px var(--f-display)} .type span{font-size:12.5px;color:var(--muted)}
+.type[aria-pressed="true"]{border:2px solid var(--amber);background:var(--amber-bg)}
+.fld{display:grid;gap:4px;min-width:0}
+.fld label{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fld input,.fld textarea,.fld select{background:var(--plate);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:16px;width:100%;min-width:0}
+.fld textarea{min-height:76px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--plate);border-radius:999px;padding:8px 12px;font:700 13.5px var(--f-mono);cursor:pointer;min-height:38px}
+.qty{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:6px}
+.qty input{text-align:center;font-size:20px;font-weight:700}
+.qty .btn{font-size:22px;padding:0}
+.chips.sm .chip{padding:6px 10px;font-size:12.5px;min-height:34px}
+.chip small{font:400 11.5px var(--f-body);opacity:.75;margin-left:4px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cov{display:flex;gap:6px;flex-wrap:wrap}
+.cv{border-radius:6px;padding:5px 9px;font:600 13px var(--f-mono);border:1px solid var(--line)}
+.cv.have{background:var(--ok-bg);border-color:transparent;color:var(--ok)} .cv.miss{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.hint{background:var(--info-bg);border-radius:8px;padding:9px 11px;font-size:14px}
+.photos{display:grid;gap:10px}
+.ph{background:var(--plate);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:10px;padding:10px;display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:start}
+.ph.warn{border-left-color:var(--amber)}
+.ph button.th{width:96px;height:96px;border:0;border-radius:8px;background:var(--steel) center/cover no-repeat;padding:0;cursor:pointer}
+.ph .b{display:grid;gap:4px;min-width:0}
+.ph .tg{font:600 18px/1.1 var(--f-display)}
+.ph .cap{font-size:14px;overflow-wrap:anywhere}
+.ph .meta{font:500 12px var(--f-mono);color:var(--muted)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--plate);border-top:1px solid var(--line);z-index:5;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar .wrap{padding-block:10px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+.shoot{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--amber);color:#1b1206;border-radius:12px;min-height:58px;font:700 20px var(--f-display);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.shoot input,.gal input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.gal,.sendb{position:relative;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;min-height:58px;padding:0 12px;font-weight:600;font-size:13.5px;text-align:center;line-height:1.1;cursor:pointer;background:var(--plate)}
+.sendb{background:var(--ok);color:#fff;border-color:var(--ok)}
+.sheet{position:fixed;inset:0;background:rgba(5,10,18,.6);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.panel{background:var(--bg);width:100%;max-width:860px;max-height:100%;overflow:auto;border-radius:16px 16px 0 0;-webkit-overflow-scrolling:touch}
+.phead{position:sticky;top:0;z-index:2;background:var(--navy);color:var(--navy-fg);display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.phead h2{margin:0;font:600 21px var(--f-display);text-transform:uppercase}
+.pbody{padding:12px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:12px}
+.preview{background:#000;border-radius:10px;overflow:auto;max-height:36vh}
+.preview img{display:block;width:100%}
+.preview.zoom img{width:250%;max-width:none}
+.qrow{border-radius:8px;padding:8px 10px;font-size:14px}
+.qrow.good{background:var(--ok-bg)} .qrow.warn{background:var(--amber-bg)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14.5px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+.banner{border-radius:10px;padding:10px 12px;font-size:14px;background:var(--info-bg)}
+.banner.bad{background:var(--bad-bg)}
+.sendopt{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--plate);display:grid;gap:4px;text-align:left;cursor:pointer}
+.sendopt[aria-pressed="true"]{border:2px solid var(--ok);background:var(--ok-bg)}
+.sendopt b{font-size:15.5px}
+.betab{font:700 11px var(--f-mono);background:#e8730c;color:#fff;border-radius:4px;padding:2px 6px;margin-left:6px;align-self:center}
+.chip.miss{opacity:.45;text-decoration:line-through}
+.bnow{border:2px solid var(--amber);background:var(--amber-bg);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.bnow .lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.bnow .big{font-size:20px;font-weight:800;line-height:1.2}
+.bnow .row{margin-top:8px}
+.bcol{flex-direction:column!important;align-items:center;justify-content:center;text-align:center}
+.chip.t-Blue{border-left:5px solid #1f6fd1}.chip.t-Green{border-left:5px solid #1e9a4b}.chip.t-Red{border-left:5px solid #d23b33}.chip.t-Gray{border-left:5px solid #7b8794}.chip.t-Yellow{border-left:5px solid #d9a400}.chip.t-White{border-left:5px solid #bbb}
+.ver{font:500 11.5px var(--f-mono);color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <button class="hbtn" id="back" type="button" hidden aria-label="Back to reports">‹ Reports</button>
+  <h1 id="htitle">Photo <span>Report</span></h1><span class="betab">BETA</span>
+  <button class="hbtn" id="edit" type="button" hidden>Details</button>
+</div></header>
+
+<main><div class="wrap">
+  <!-- HOME -->
+  <section id="home" class="grid" style="display:grid;gap:12px">
+    <div id="installHint" class="banner" hidden></div>
+    <div id="storeWarn" class="banner bad" hidden><b>This browser may not keep photos.</b> Send each report before closing the app.</div>
+    <button class="btn amber wide" id="newRep" type="button" style="min-height:56px;font-size:18px">+ New report</button>
+    <div id="reps" style="display:grid;gap:10px"></div>
+    <div class="card" id="cleared" hidden></div>
+    <div class="ver" id="ver"></div>
+  </section>
+
+  <!-- REPORT -->
+  <section id="report" hidden style="display:grid;gap:12px">
+    <div class="card" id="rinfo"></div>
+    <div class="hint" id="rhint"></div>
+    <div class="card" id="covcard" hidden><h2>Trailer coverage</h2><div class="small muted" id="covtxt"></div><div class="cov" id="cov"></div></div>
+    <div class="photos" id="photos"></div>
+    <div class="card">
+      <h2>Notes</h2>
+      <div class="fld"><label for="rnotes">Notes for this report</label><textarea id="rnotes" placeholder="Tap the microphone on your keyboard to talk instead of type."></textarea></div>
+    </div>
+    <div class="card">
+      <h2>Finish</h2>
+      <p class="small muted" style="margin:0">Only when the job is completely done and everything has been sent. This takes the report off the main list. It is kept in <b>Cleared reports</b> for 7 days in case you need it back.</p>
+      <div class="row"><button class="btn bad" id="finish" type="button">Job done: clear this report…</button></div>
+    </div>
+  </section>
+</div></main>
+
+<div class="bar" id="bar" hidden><div class="wrap">
+  <label class="shoot" for="cam"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Take photo<input id="cam" type="file" accept="image/*" capture="environment"></label>
+  <label class="gal" for="gal">Add<br>photos<input id="gal" type="file" accept="image/*" multiple></label>
+  <button class="sendb" id="send" type="button">Send</button>
+</div></div>
+
+<div class="sheet" id="sheet" hidden><div class="panel" role="dialog" aria-modal="true" aria-labelledby="stitle">
+  <div class="phead"><h2 id="stitle">…</h2><button class="hbtn" id="sclose" type="button">Done</button></div>
+  <div class="pbody" id="sbody"></div>
+</div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const VERSION = "1.3.2-beta · 2026-11-11";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:v; }catch(_){ return d; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
+function toast(m,ms){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true, ms||2800); }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const today = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const stamp = t => { const d=new Date(t); return d.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}); };
+
+// ---------- report types ----------
+const TYPES = {
+  asset:   {name:"Asset capture", short:"Asset Capture", desc:"New trailer build, nameplates", hint:"Photograph every nameplate straight on, then tag it (UPS, DS, MBP…). Use Add photos for close-ups. The office AI reads the labels.",
+            fields:[]},
+  strip:   {name:"Strip / scrap unit", short:"Strip", desc:"Parts pulled for spares, scrap, purge", hint:"1. Photograph the nameplate. 2. For each part removed: one photo with its part number showing, then tap what it is. Hard-to-read label? Add a close-up. No typing needed.",
+            fields:[]},
+  startup: {name:"Startup / commissioning", short:"Startup", desc:"Display screens, settings", hint:"Photograph each UPS display screen and setting page. The office AI reads the readings into the startup checklist.",
+            fields:[["ups","UPS asset #","UPS684"]]},
+  load:    {name:"Load test", short:"Load Test", desc:"Screens every step", hint:"Photograph the UPS display and the load bank at every load step and every 10 minutes. Photo times build the test timeline.",
+            fields:[["ups","UPS asset #","UPS684"],["loadbank","Load bank","Make / size"]]},
+  trouble: {name:"Troubleshooting", short:"Troubleshooting", desc:"Equipment problem", hint:"Photograph the equipment label first, then the alarm screen and the problem. Say what happened in the notes.",
+            fields:[["equip","Equipment / asset #","UPS619"],["symptom","Symptom","What's wrong"],["codes","Alarm / fault codes",""]]},
+  damage:  {name:"Damage", short:"Damage Report", desc:"Shipping or site damage", hint:"Photograph a wide shot first, then close-ups of each damaged spot, plus any labels on the damaged part.",
+            fields:[["what","What is damaged",""],["where","Where found",""],["when","When found",""],["present","Who was present",""],["notified","Customer notified?","Yes / No"],["ra","Rental agreement #",""]]},
+  handoff: {name:"Delivery / return", short:"Delivery", desc:"Condition at hand-off", hint:"Walk around the trailer: all four sides, hitch, tires, doors, then inside. Note anything already damaged.",
+            fields:[["ra","Rental agreement #",""]], dir:true},
+  site:    {name:"Site photos", short:"Site Photos", desc:"General, marketing", hint:"Anything worth keeping. Add a caption to each photo.",
+            fields:[]},
+  binder:  {name:"Binder / manual pages", short:"Binder", desc:"Catalog, manual or binder pages", hint:"Lay the page flat, light from the side, all four edges in the frame. Pick the tab and document once; after that tap 📷 Next page. Flag handwriting as Markup.",
+            fields:[]},
+};
+const BINDER_PRESET = {name:"Dynasty VRLA Complete Catalog Binder 41-6222", tabs:[{"t":"Front matter","c":"White","f":[["41-7847","JCI Specialty Battery Cross Reference (Rev 3/98)",1],["41-6960","Catalog Registration Card",1],["41-6978","Table of Contents",1],["41-3197","Literature Order Form",1]]},{"t":"Deep Cycle Series","c":"Blue","f":[["41-7961","DCS Brochure",1],["41-7956","DCS-33",1],["41-7957","DCS-50",1],["41-7958","DCS-75",1],["41-7959","DCS-88",1],["41-7960","DCS-100",1]]},{"t":"Broadband Series","c":"Blue","f":[["41-7922","Broadband Series Brochure",1],["41-7903","BBA-160RT",1],["41-7136","BBG-165RT",1],["41-7904","BBG-180RT",1]]},{"t":"UPS High Rate Series","c":"Blue","f":[["41-7811","UPS High Rate Series Brochure",1],["41-7378","UPS12-100",1],["41-7106","UPS12-140",1],["41-7107","UPS12-170",1],["41-7532","UPS12-200",1],["41-7108","UPS12-270",1],["41-7109","UPS12-310",1],["41-7110","UPS12-370",1],["41-7111","UPS12-475",1],["41-7112","UPS6-620",1]]},{"t":"Multi-Purpose Series","c":"Blue","f":[["41-6388MPS","MPS12-33",1],["41-7107MPS","MPS12-50",1],["41-6390MPS","MPS12-75",1],["41-6511MPS","MPS12-88",1],["41-6233MPS","MPS12-100",1]]},{"t":"TEL Long Duration Series","c":"Blue","f":[["41-7792","TEL Long Duration Series Brochure",1],["41-7099","TEL12-30",1],["41-7098","TEL12-30/SLC",1],["41-7101","TEL12-45",1],["41-7100","TEL12-45/SLC",1],["41-7102","TEL12-70",1],["41-7219","TEL12-80",1],["41-7225","TEL12-80/SLC",1],["41-7103","TEL12-90",1],["41-7827","TEL12-105F",1],["41-7104","TEL12-125",1],["41-7105","TEL6-180",1]]},{"t":"Telecom Racks Systems","c":"Blue","f":[["41-7813","TEL Rack Brochure",1],["41-7818","Rack Selection Guide",1]]},{"t":"Battery Racks & Cabinets","c":"Blue","f":[["41-7926","Cabinet System Brochure",1]]},{"t":"Battery Accessories","c":"Blue","f":[["41-7492","VRLA Battery Accessories",1]]},{"t":"VRLA Battery Application","c":"Green","f":[["41-7327","Dynasty Batteries & their Applications",1],["41-7954","Extended Run Time for UPS",1],["41-7955","Engine Starting Applications",1],["41-7952","Parallel Operation of Batteries",1]]},{"t":"VRLA Battery Systems Sizing","c":"Green","f":[["41-7334","UPS Applications & Sizing",1],["41-7361","Communications Applications & Sizing",1]]},{"t":"VRLA Battery Life & Temperature","c":"Green","f":[["41-7329","Life Expectancy",1],["41-7953","Electrolyte Freeze Protection",1],["41-7944","Thermal Runaway - Its Cause & Prevention",1]]},{"t":"VRLA Battery Charging","c":"Green","f":[["41-2128","Charging Dynasty Batteries",1],["41-2129","Constant Voltage Charger Selection",1],["41-2130","Recharge Time Determination",1],["41-2131","Charger Output AC Ripple Voltage",1]]},{"t":"VRLA Battery Testing","c":"Green","f":[["41-7135","Acceptance & Performance Testing",1],["41-7271","Impedance & Conductance Testing",1],["41-7264","Integrity Testing",1]]},{"t":"VRLA Battery Room Considerations","c":"Green","f":[["41-6739","AGM/Gel Gassing & Ventilation",1]]},{"t":"VRLA Battery Inventory Control","c":"Red","f":[["41-7272","Self Discharge & Inventory Control",1]]},{"t":"VRLA Battery Maintenance","c":"Red","f":[["41-7546","Periodic Maintenance Instructions",1]]},{"t":"VRLA Battery Install & Start-up","c":"Red","f":[["41-7525","Battery Installation & Start-up Guide",1],["41-6980","Installation, Operation & Maintenance Instr.",1],["41-7471","Operational Qualification",1]]},{"t":"VRLA Battery Recycling & Safety","c":"Red","f":[["41-9702","Immobilized Electrolytes",1],["41-8797","Material Safety Data Sheet L-83",1],["41-9701","Material Safety Data Sheet L-84",1]]},{"t":"VRLA Technical Papers","c":"Gray","f":[["41-6867","Thermal Management of VRLA Batteries",1],["41-7943","Lead Acid Batteries - Problems & Solutions",1]]},{"t":"Lead Acid Battery Terminology","c":"Gray","f":[["41-7745","Terminology Glossary Pamphlet",1]]},{"t":"Warranty Policies","c":"Yellow","f":[["41-7258","TEL Long Duration Warranty",1],["41-7259","UPS High Rate Warranty",1],["41-7260","DCS Deep Cycle Warranty",1],["41-7261","MPS Multi-Purpose Warranty",1],["41-7919","Broadband Series Warranty",1],["41-6871","Terms & Conditions",1]]}]};
+const BFLAGS = [["markup","Markup / handwriting"],["poor","Poor print"],["divider","Divider / tab"],["blankback","Back is blank"]];
+const btag = p => p.form ? `${p.form} p${p.page||1}` : (p.page?`p${p.page}`:"");
+const tabOf = name => BINDER_PRESET.tabs.find(t=>t.t===name);
+// Strip / scrap: what each photo shows. Board names from "Circuit Boards / Printed Wire Assemblies" (NPower, 2015-04-13).
+const PARTS = [
+  ["Unit", ["Nameplate","Whole unit"]],
+  ["Power devices", ["Rectifier SCR","Inverter IGBT","Static Switch SCR"]],
+  ["Contactors", ["Contactor M1 Input","Contactor M3 Output","Contactor M4 Bypass Line","Contactor M5 Bypass Load","Contactor M6 Input Filter"]],
+  ["CTs", ["Hall Effect CT","Current CT"]],
+  ["Assemblies", ["DC Capacitor Assy","Input Filter Assy","Output Filter Assy"]],
+  ["Door boards", ["UPS Control PWA (UPSC)","Micro Monitor PWA","V.I.T. PWA","System Switchgear PWA","CT Burden PWA","Power Supply PWA","H.V. PWA (High Voltage)"]],
+  ["Heatsink boards", ["Inverter Driver PWA","Rectifier Driver PWA","Rectifier Snubber PWA","Bypass SS Driver PWA","Bypass SS Snubber PWA","Redundant Fan Sensing PWA"]],
+  ["Misc", ["OC-DI Input Relay Board (2-pin)","OC-DO Output Relay Board (3-pin)","IFM Comm Module","Battery Interface PWA (BIB, batt cab)","LBS Interface PWA (option)","Capacitor PWA","Fan","Fuse","Display","Breaker","Other part"]],
+];
+const ACTIONS = ["Strip for spares","Scrap","Purge"];
+const PREFIXES = [["UPS",""],["DS","breaker / switchboard"],["MBP","maint. bypass"],["MON","Sensaphone"],["HVAC","HVAC unit"],["CONT","HVAC controller"],["XFMR","transformer"],["BC","battery cabinet"]];
+const TRAILER_SET = ["UPS","DS","MBP","MON","HVAC","CONT","XFMR"];
+const TAGRE = /^(UPS|DS|MBP|MON|HVAC|CONT|XFMR|BC)\s*-?\s*(\d+)\s*$/i;
+const prefixOf = tag => { const m=String(tag||"").match(TAGRE); return m?m[1].toUpperCase():""; };
+
+// ---------- storage ----------
+let idb=null, persistent=false;
+const mem={reps:new Map(), blobs:new Map()};
+function openDB(){ return new Promise(res=>{ try{ const r=indexedDB.open("sp-photo-report-beta",1);
+  r.onupgradeneeded=()=>{ const d=r.result; d.createObjectStore("reports",{keyPath:"id"}); d.createObjectStore("blobs"); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>res(null); r.onblocked=()=>res(null); }catch(_){ res(null); } }); }
+function req(store,mode,fn){ return new Promise((res,rej)=>{ const t=idb.transaction(store,mode); const r=fn(t.objectStore(store)); t.oncomplete=()=>res(r&&r.result); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); }); }
+const db = {
+  async saveRep(r){ r.updated=Date.now(); if (idb) await req("reports","readwrite",s=>s.put(r)); else mem.reps.set(r.id,r); },
+  async delRep(id){ if (idb) await req("reports","readwrite",s=>s.delete(id)); else mem.reps.delete(id); },
+  async allReps(){ if (!idb) return [...mem.reps.values()]; return new Promise(res=>{ const r=idb.transaction("reports").objectStore("reports").getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>res([]); }); },
+  async putBlob(id,b){ if (idb) await req("blobs","readwrite",s=>s.put(b,id)); else mem.blobs.set(id,b); },
+  async getBlob(id){ if (!idb) return mem.blobs.get(id); return new Promise(res=>{ const r=idb.transaction("blobs").objectStore("blobs").get(id); r.onsuccess=()=>res(r.result||null); r.onerror=()=>res(null); }); },
+  async delBlob(id){ if (idb) await req("blobs","readwrite",s=>s.delete(id)); else mem.blobs.delete(id); },
+};
+const urls=new Map();
+async function urlFor(id){ if (urls.has(id)) return urls.get(id); const b=await db.getBlob(id); if (!b) return ""; const u=URL.createObjectURL(b); urls.set(id,u); return u; }
+
+// ---------- state ----------
+let reps=[], cur=null, openPhoto=null;
+const tech = () => ls.get("pr.tech","");
+
+// ---------- image prep + quality check ----------
+async function loadImg(file){
+  try{ return await createImageBitmap(file,{imageOrientation:"from-image"}); }
+  catch(_){ return await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file); }); }
+}
+async function prepare(file, opt){
+  opt=opt||{}; const img=await loadImg(file); const W=img.width, H=img.height;
+  const s=Math.min(1,(opt.full?4000:2000)/Math.max(W,H)); const c=document.createElement("canvas"); c.width=Math.round(W*s); c.height=Math.round(H*s);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  const blob=await new Promise(r=>c.toBlob(b=>r(b||file),"image/jpeg",opt.full?0.9:0.85));
+  const qs=Math.min(1,640/Math.max(W,H)); const qc=document.createElement("canvas"); qc.width=Math.max(1,Math.round(W*qs)); qc.height=Math.max(1,Math.round(H*qs));
+  const g=qc.getContext("2d"); g.drawImage(img,0,0,qc.width,qc.height);
+  const d=g.getImageData(0,0,qc.width,qc.height).data, w=qc.width, h=qc.height;
+  const gray=new Float32Array(w*h); let sum=0; const cells=new Float32Array(64), cn=new Float32Array(64);
+  for(let i=0,p=0;i<d.length;i+=4,p++){ const v=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; gray[p]=v; sum+=v;
+    const ci=Math.min(7,Math.floor((p%w)*8/w))+8*Math.min(7,Math.floor(Math.floor(p/w)*8/h)); cn[ci]++; if(d[i]>240&&d[i+1]>240&&d[i+2]>240) cells[ci]++; }
+  let spot=0; for(let k=0;k<64;k++) if(cn[k]) spot=Math.max(spot,cells[k]/cn[k]);
+  let ls_=0,lq=0,ln=0; for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const p=y*w+x; const l=4*gray[p]-gray[p-1]-gray[p+1]-gray[p-w]-gray[p+w]; ls_+=l; lq+=l*l; ln++; }
+  const sharp=ln?(lq/ln-(ls_/ln)**2):0, bright=sum/(w*h);
+  const issues=[]; if (sharp<120) issues.push("Blurry? Hold steady or tap the screen to focus"); if (spot>0.2) issues.push("Possible glare spot. Zoom in and check no text is washed out");
+  if (bright<55) issues.push("Too dark. Add light or step closer"); if (Math.min(W,H)<900) issues.push("Low resolution. Move closer or use the main camera");
+  let edges=null;
+  if (opt.edges){ const st=Math.max(3,Math.round(0.02*Math.min(w,h))); const side={top:0,bottom:0,left:0,right:0}, cnt={top:0,bottom:0,left:0,right:0};
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=4*(y*w+x); const mx=Math.max(d[i],d[i+1],d[i+2]), mn=Math.min(d[i],d[i+1],d[i+2]); const paper=gray[y*w+x]>170 && (mx-mn)<40;
+      const hit=k=>{ cnt[k]++; if(paper) side[k]++; }; if(y<st) hit("top"); if(y>=h-st) hit("bottom"); if(x<st) hit("left"); if(x>=w-st) hit("right"); }
+    edges={}; Object.keys(side).forEach(k=>edges[k]=Math.round(100*side[k]/cnt[k]));
+    const cut=Object.keys(edges).filter(k=>edges[k]>=60); if (cut.length) issues.push(`Paper touches the ${cut.join(" and ")} edge. Check the page isn't cut off`); }
+  return {blob, w:c.width, h:c.height, q:{ok:!issues.length, issues, sharpness:Math.round(sharp), brightness:Math.round(bright), glare_spot_pct:Math.round(100*spot), paper_at_edge_pct:edges||undefined}};
+}
+
+// ---------- views ----------
+function show(view){
+  $("home").hidden = view!=="home"; $("report").hidden = view!=="report"; $("bar").hidden = view!=="report";
+  $("back").hidden = view!=="report"; $("edit").hidden = view!=="report";
+  if (view==="home"){ $("htitle").innerHTML='Photo <span>Report</span>'; renderHome(); window.scrollTo(0,0); }
+}
+function repTitle(r){ return [r.asset, TYPES[r.type].short + (r.type==="handoff" ? (r.dir==="in"?" (Return)":" (Delivery)") : "")].filter(Boolean).join(" · "); }
+async function renderHome(){
+  const all = (await db.allReps()).sort((a,b)=>b.updated-a.updated);
+  reps = all.filter(r=>!r.cleared); const gone = all.filter(r=>r.cleared).sort((a,b)=>b.cleared-a.cleared);
+  $("cleared").innerHTML = gone.length ? `<h2>Cleared reports</h2><p class="small muted" style="margin:0">Kept on this phone for 7 days after clearing, then deleted for good.</p>` + gone.map(r=>{
+    const left=Math.max(0,Math.ceil((r.cleared+KEEP_MS-Date.now())/864e5)), unsent=r.photos.filter(p=>!p.sent).length;
+    return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:8px"><span class="small"><b>${esc(repTitle(r))}</b><br><span class="muted">${r.photos.length} photos${unsent?` · <b style="color:var(--bad)">${unsent} never sent</b>`:""} · deleted in ${left} day${left===1?"":"s"}</span></span><button class="btn ghost" type="button" data-restore="${r.id}">Restore</button></div>`;
+  }).join("") : "";
+  $("cleared").hidden = !gone.length;
+  $("reps").innerHTML = reps.length ? reps.map(r=>{
+    const n=r.photos.length, unsent=r.photos.filter(p=>!p.sent).length;
+    return `<button class="rep" type="button" data-open="${r.id}"><span class="t">${esc(repTitle(r))}</span>
+      <span class="m">${esc(r.site||"No site")} · ${n} photo${n===1?"":"s"} · updated ${esc(stamp(r.updated))}</span>
+      <span class="row">${r.sends.length?`<span class="pill ok">Sent ${r.sends.length}×</span>`:`<span class="pill">Not sent</span>`}${unsent&&r.sends.length?`<span class="pill warn">${unsent} new since last send</span>`:""}</span></button>`;
+  }).join("") : `<div class="empty"><b>No open reports</b><span>Tap New report. Reports stay on this phone, even for days, until you finish them.</span></div>`;
+  $("ver").textContent = "Photo Report v"+VERSION+" · "+(persistent?"photos saved on this phone":"storage limited");
+}
+$("reps").addEventListener("click", e=>{ const b=e.target.closest("[data-open]"); if (b) openRep(b.dataset.open); });
+async function openRep(id){ cur = reps.find(r=>r.id===id) || (await db.allReps()).find(r=>r.id===id); if (!cur) return; show("report"); renderRep(); window.scrollTo(0,0); }
+$("back").addEventListener("click", ()=>{ cur=null; show("home"); });
+
+function fieldVals(r){ return TYPES[r.type].fields.map(([k,l])=>[l,r.f[k]]).filter(x=>x[1]); }
+async function renderRep(){
+  const r=cur, T=TYPES[r.type];
+  $("htitle").textContent = repTitle(r);
+  const fv = fieldVals(r);
+  $("rinfo").innerHTML = `<div class="row"><span class="pill">${esc(T.name)}${r.type==="handoff"?" · "+(r.dir==="in"?"Return":"Delivery"):""}</span>${r.sends.length?`<span class="pill ok">Sent ${r.sends.length}×</span>`:""}</div>
+    <div class="small"><b>${esc(r.asset||"No trailer / asset")}</b> · ${esc(r.site||"No site")}${r.job?" · Job "+esc(r.job):""} · Tech ${esc(r.tech||"—")}</div>
+    ${fv.length?`<div class="small muted">${fv.map(([l,v])=>`${esc(l)}: <b style="color:var(--ink)">${esc(v)}</b>`).join(" · ")}</div>`:""}`;
+  $("rhint").textContent = T.hint;
+  $("rnotes").value = r.notes||"";
+  // coverage
+  $("covcard").hidden = r.type!=="asset" && r.type!=="strip" && r.type!=="binder";
+  if (r.type==="binder"){ $("covcard").querySelector("h2").textContent="Binder coverage";
+    const forms=new Set(r.photos.map(p=>p.form).filter(Boolean)), un=r.photos.filter(p=>!p.form).length, mk=r.photos.filter(p=>(p.flags||[]).includes("markup")).length;
+    const all=BINDER_PRESET.tabs.flatMap(t=>t.f.filter(f=>f[2]).map(f=>f[0])), done=all.filter(f=>forms.has(f)).length;
+    $("covtxt").textContent = r.f.preset==="none" ? "" : `${done} of ${all.length} documents in the binder have at least one page in this report.`;
+    $("cov").innerHTML = `<span class="cv have">${forms.size} document${forms.size===1?"":"s"}</span><span class="cv have">${r.photos.length} page${r.photos.length===1?"":"s"}</span>${mk?`<span class="cv have">${mk} markup</span>`:""}${un?`<span class="cv miss">${un} without form #</span>`:""}${r.f.full==="1"?`<span class="cv have">Full resolution</span>`:""}`; }
+  if (r.type==="strip"){ $("covcard").querySelector("h2").textContent="Unit coverage";
+    const plate=r.photos.some(p=>p.tag==="Nameplate"), parts=r.photos.filter(p=>p.tag&&!p.closeup&&p.tag!=="Nameplate"&&p.tag!=="Whole unit"), un=r.photos.filter(p=>!p.tag).length;
+    const kinds=new Set(parts.map(p=>p.tag)).size, qty=parts.reduce((n,p)=>n+(p.qty||1),0);
+    $("covtxt").textContent = `${r.f.actions||""}`;
+    $("cov").innerHTML = `<span class="cv ${plate?"have":"miss"}">Nameplate ${plate?"✓":"missing"}</span><span class="cv have">${kinds} part type${kinds===1?"":"s"} · ${qty} pcs</span>${un?`<span class="cv miss">${un} not tagged</span>`:""}`;
+  } else if (r.type!=="binder") $("covcard").querySelector("h2").textContent="Trailer coverage";
+  if (r.type==="asset"){
+    const have={}; new Set(r.photos.map(p=>p.tag).filter(Boolean)).forEach(t=>{ const p=prefixOf(t); if (p) have[p]=(have[p]||0)+1; });
+    const trailer = r.siteType!=="standalone";
+    const miss = trailer ? TRAILER_SET.filter(p=>!have[p]) : [];
+    const need = have.HVAC?Math.ceil(have.HVAC/2):0;
+    $("covtxt").textContent = (trailer ? (miss.length?`Still missing: ${miss.join(", ")}.`:"All 7 trailer asset types captured.") : "Stand-alone: no fixed set.") + ((have.HVAC&&(have.CONT||0)<need)?` ${have.HVAC} HVAC usually need ${need} controller${need>1?"s":""}; ${have.CONT||0} tagged.`:"");
+    const list = trailer ? TRAILER_SET.concat(have.BC?["BC"]:[]) : PREFIXES.map(p=>p[0]).filter(p=>have[p]);
+    $("cov").innerHTML = list.map(p=>`<span class="cv ${have[p]?"have":(trailer?"miss":"")}">${p} ${have[p]?"✓ "+have[p]:"missing"}</span>`).join("");
+  }
+  // photos
+  const items = await Promise.all(r.photos.map(async (p,i)=>`<div class="ph${p.q&&!p.q.ok?" warn":""}">
+      <button class="th" type="button" data-ph="${p.id}" style="background-image:url('${await urlFor(p.id)}')" aria-label="Photo ${i+1}"></button>
+      <div class="b"><span class="tg">${esc(p.tag||("Photo "+(i+1)))}${p.closeup?" · close-up":""}${!p.closeup&&(p.qty||1)>1?" ×"+p.qty:""}</span>
+        <span class="cap">${p.caption?esc(p.caption):'<span class="muted">Tap to add a caption</span>'}</span>
+        <span class="meta">${esc(stamp(p.at))}${p.sent?" · sent #"+p.sent:" · not sent"}${p.q&&!p.q.ok?" · check photo":""}</span></div></div>`));
+  $("photos").innerHTML = items.length ? items.join("") : `<div class="empty"><b>No photos yet</b><span>Tap Take photo. Each photo gets a quick check for blur, glare and darkness.</span></div>`;
+}
+$("photos").addEventListener("click", e=>{ const b=e.target.closest("[data-ph]"); if (b) openPhotoSheet(b.dataset.ph); });
+let notesT=null;
+$("rnotes").addEventListener("input", e=>{ if (!cur) return; cur.notes=e.target.value; cur.notesAt=Date.now(); clearTimeout(notesT); notesT=setTimeout(()=>db.saveRep(cur),500); });
+
+// ---------- new / edit report ----------
+let draft=null;
+function openForm(edit){
+  const r = edit ? JSON.parse(JSON.stringify(cur)) : {id:uid(), type:"", asset:"", site:ls.get("pr.site",""), job:"", tech:tech(), f:{}, dir:"out", siteType:"trailer", notes:"", photos:[], sends:[], created:Date.now(), updated:Date.now(), assets:{}};
+  draft = {r, edit};
+  $("stitle").textContent = edit ? "Report details" : "New report";
+  renderForm();
+  $("sheet").hidden=false; document.body.style.overflow="hidden";
+}
+function renderForm(){
+  const r=draft.r, T=TYPES[r.type];
+  $("sbody").innerHTML = `
+    <div class="fld"><label>Report type</label><div class="types">${Object.entries(TYPES).map(([k,t])=>`<button type="button" class="type" data-type="${k}" aria-pressed="${r.type===k}"><b>${esc(t.name)}</b><span>${esc(t.desc)}</span></button>`).join("")}</div></div>
+    ${r.type ? `
+    ${r.type==="handoff"?`<div class="fld"><label>Direction</label><span class="seg"><button type="button" data-dir="out" aria-pressed="${r.dir!=="in"}">Delivery (out)</button><button type="button" data-dir="in" aria-pressed="${r.dir==="in"}">Return (in)</button></span></div>`:""}
+    ${r.type==="asset"?`<div class="fld"><label>Site type</label><span class="seg"><button type="button" data-st="trailer" aria-pressed="${r.siteType!=="standalone"}">Trailer</button><button type="button" data-st="standalone" aria-pressed="${r.siteType==="standalone"}">Stand-alone</button></span></div>`:""}
+    <div class="grid2">
+      <div class="fld"><label for="f-asset">${r.type==="strip"?"UPS asset #":r.type==="binder"?"Binder / document":"Trailer / asset"}</label><input id="f-asset" value="${esc(r.asset)}" placeholder="${r.type==="strip"?"UPS358":r.type==="binder"?"DYNASTY BINDER":"TRL066"}" autocapitalize="characters" autocomplete="off"></div>
+      <div class="fld"><label for="f-job">Job #</label><input id="f-job" value="${esc(r.job)}" placeholder="SP26-0000" autocapitalize="characters" autocomplete="off"></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="f-site">Site</label><input id="f-site" value="${esc(r.site)}" placeholder="Customer / location" autocomplete="off"></div>
+      <div class="fld"><label for="f-tech">Tech</label><input id="f-tech" value="${esc(r.tech)}" placeholder="Initials" autocomplete="off"></div>
+    </div>
+    ${r.type==="strip"?`<div class="fld"><label>What's happening to this unit</label><div class="chips" id="f-act">${ACTIONS.map(a=>`<button type="button" class="chip" data-act="${esc(a)}" aria-pressed="${(r.f.actions||"").split(", ").includes(a)}">${esc(a)}</button>`).join("")}</div></div>`:""}
+    ${r.type==="binder"?`<div class="fld"><label>Tab list</label><span class="seg"><button type="button" data-bp="dyn" aria-pressed="${r.f.preset!=="none"}">Dynasty 41-6222</button><button type="button" data-bp="none" aria-pressed="${r.f.preset==="none"}">None (type form #)</button></span></div>
+    <div class="fld"><label>Photo size</label><span class="seg"><button type="button" data-full="0" aria-pressed="${r.f.full!=="1"}">Standard</button><button type="button" data-full="1" aria-pressed="${r.f.full==="1"}">Full res (small print)</button></span><span class="small muted">Full res is about 3× bigger. Use it for faint or tiny print.</span></div>`:""}
+    ${T.fields.map(([k,l,ph])=>`<div class="fld"><label for="f-${k}">${esc(l)}</label><input id="f-${k}" data-f="${k}" value="${esc(r.f[k]||"")}" placeholder="${esc(ph)}" autocomplete="off"></div>`).join("")}
+    <button class="btn amber wide" id="saveForm" type="button">${draft.edit?"Save details":"Start report"}</button>
+    ${draft.edit?"":`<p class="small muted" style="margin:0">The report stays on this phone until you finish it. You can send it as many times as you need.</p>`}` : `<p class="small muted" style="margin:0">Pick what this report is for.</p>`}`;
+}
+function readForm(){
+  const r=draft.r; const g=id=>{ const el=$(id); return el?el.value.trim():undefined; };
+  ["asset","job","site","tech"].forEach(k=>{ const v=g("f-"+k); if (v!==undefined) r[k]= (k==="asset"||k==="job") ? v.toUpperCase() : v; });
+  document.querySelectorAll("[data-f]").forEach(el=>{ r.f[el.dataset.f]=el.value.trim(); });
+}
+$("newRep").addEventListener("click", ()=>openForm(false));
+$("edit").addEventListener("click", ()=>openForm(true));
+
+// ---------- photo sheet ----------
+async function openPhotoSheet(pid){
+  const r=cur; const i=r.photos.findIndex(p=>p.id===pid); if (i<0) return; const p=r.photos[i]; openPhoto=pid; draft=null;
+  $("stitle").textContent = `Photo ${i+1} of ${r.photos.length}`;
+  const pre=prefixOf(p.tag), num=(String(p.tag||"").match(TAGRE)||[])[2]||"";
+  const x=(r.assets[p.tag]||{});
+  $("sbody").innerHTML = `
+    <div class="preview" id="prev"><img src="${await urlFor(p.id)}" alt="Photo"></div>
+    ${p.q?(p.q.ok?`<div class="qrow good"><b>Looks OK.</b> Tap the photo to zoom and check you can read it.</div>`:p.q.issues.map(s=>`<div class="qrow warn"><b>Check:</b> ${esc(s)}</div>`).join("")):""}
+    ${r.type==="binder" ? binderHtml(r,p) : r.type==="strip" ? `<div class="row"><label class="btn amber" for="p-next-shot" style="flex:1">📷 Next part<input id="p-next-shot" type="file" accept="image/*" capture="environment"></label><label class="btn ghost" for="p-more">+ Close-up<input id="p-more" type="file" accept="image/*" multiple></label></div>` + stripHtml(r,p) : `
+    <div class="fld"><label for="p-cap">Caption</label><textarea id="p-cap" placeholder="What is this? Tap the keyboard microphone to talk.">${esc(p.caption||"")}</textarea></div>
+    ${r.type==="asset" ? tagHtml(r,p,pre,num,x) : `<details class="card" ${p.tag?"open":""}><summary class="small"><b>Different asset in this photo?</b> <span class="muted">Optional. This report is already for ${esc(r.asset||"—")}.</span></summary>${tagHtml(r,p,pre,num,x)}</details>`}`}
+    <div class="row">
+      <label class="btn ${r.type==="strip"||r.type==="binder"?"ghost":"amber"}" for="p-retake">Retake<input id="p-retake" type="file" accept="image/*" capture="environment"></label>
+      ${r.type==="strip"||r.type==="binder"?"":`<label class="btn ghost" for="p-more">+ More of this asset<input id="p-more" type="file" accept="image/*" multiple></label>`}
+      ${r.photos.length>1?`<button class="btn ghost" type="button" id="p-prev">◀</button><button class="btn ghost" type="button" id="p-next">▶</button>`:""}
+    </div>
+    <div class="row"><button class="btn bad" type="button" id="p-del">Delete photo</button><span id="p-delask" hidden>Sure? <button class="btn bad" type="button" id="p-delyes">Delete</button></span></div>`;
+  $("sheet").hidden=false; document.body.style.overflow="hidden";
+}
+function bIdx(tab,form){ return tab?tab.f.findIndex(f=>f[0]===form):-1; }
+function bNext(tab,form){ if (!tab) return null; const i=bIdx(tab,form); return tab.f[i+1]||null; }
+function bDesc(tab,form){ const f=tab&&tab.f.find(x=>x[0]===form); return f?f[1]:""; }
+function bannerHtml(r,p,tab){
+  const nx=bNext(tab,p.form);
+  const now=p.form?`${esc(p.form)}${bDesc(tab,p.form)?" · "+esc(bDesc(tab,p.form)):""} · page ${esc(p.page||1)}`:(tab?"No document picked — tap one below":"Pick the tab first");
+  return `<div class="bnow" id="b-now"><div class="lab">This photo is</div><div class="big">${now}</div>
+    ${tab?`<div class="small" style="margin-top:4px">Next document: <b>${nx?esc(nx[0])+" · "+esc(nx[1]):"end of tab"}</b></div>
+    <div class="row"><button type="button" class="btn ghost" id="b-prevdoc" ${bIdx(tab,p.form)>0?"":"disabled"}>◀ Previous doc</button><button type="button" class="btn ghost" id="b-skipdoc" ${nx?"":"disabled"}>Skip doc ▶</button></div>
+    <div class="small muted" style="margin-top:4px">Wrong label? Use these to move <i>this photo</i> to the right document.</div>`:""}</div>`; }
+function binderHtml(r,p){
+  const preset=r.f.preset!=="none", tab=preset?tabOf(p.tab):null, nx=bNext(tab,p.form);
+  return `${preset?bannerHtml(r,p,tab):""}<div class="row"><label class="btn amber bcol" for="b-next" style="flex:1;min-height:56px;font-size:18px">📷 Next page<small style="display:block;font-size:12px;font-weight:400">same document, page ${esc((p.page||1)+1)}</small><input id="b-next" type="file" accept="image/*" capture="environment"></label><label class="btn ghost bcol" for="b-newdoc" style="flex:1">📷 New document<small style="display:block;font-size:12px;font-weight:400">${nx?esc(nx[0])+" · "+esc(nx[1]):(tab?"type the form #":"")}</small><input id="b-newdoc" type="file" accept="image/*" capture="environment"></label></div>
+    ${preset?`<details class="fld" id="b-tabsd" ${p.tab?"":"open"}><summary class="small"><b>Tab:</b> <span id="b-tabname">${esc(p.tab||"pick one")}</span> <span class="muted">· tap to change</span></summary><div class="chips sm" id="b-tabs" style="margin-top:8px">${BINDER_PRESET.tabs.map(t=>`<button type="button" class="chip t-${t.c}" data-btab="${esc(t.t)}" aria-pressed="${p.tab===t.t}">${esc(t.t)}</button>`).join("")}</div></details>
+    <div class="fld" id="b-formsfld" ${tab?"":"hidden"}><label>Document</label><div class="chips sm" id="b-forms">${tab?formsHtml(tab,p):""}</div></div>`:""}
+    <div class="grid2">
+      <div class="fld"><label for="b-form">Form #${preset?" (tap above or type)":""}</label><input id="b-form" value="${esc(p.form||"")}" placeholder="41-7958" autocapitalize="characters" autocomplete="off"></div>
+      <div class="fld"><label for="b-page">Page of this document</label><div class="qty"><button type="button" class="btn ghost" data-bq="-1" aria-label="Previous page">−</button><input id="b-page" value="${esc(p.page||1)}" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button type="button" class="btn ghost" data-bq="1" aria-label="Next page">+</button></div></div>
+    </div>
+    <div class="fld"><label>Flag this page</label><div class="chips" id="b-flags">${BFLAGS.map(([k,l])=>`<button type="button" class="chip" data-bflag="${k}" aria-pressed="${(p.flags||[]).includes(k)}">${esc(l)}</button>`).join("")}</div></div>
+    <div class="fld"><label for="p-cap">Note (optional)</label><textarea id="p-cap" placeholder="Only what the photo can't show. Tap the keyboard microphone to talk.">${esc(p.caption||"")}</textarea></div>`; }
+function formsHtml(tab,p){ return tab.f.map(([f,d,have])=>`<button type="button" class="chip${have?"":" miss"}" data-bform="${esc(f)}" aria-pressed="${p.form===f}"><b>${esc(f)}</b><small>${esc(d)}${have?"":" · not in binder"}</small></button>`).join(""); }
+function tagHtml(r,p,pre,num,x){ return `
+    <div class="fld"><label>Asset tag ${r.type==="asset"?"":"(optional)"}</label><div class="chips" id="p-pre">${PREFIXES.map(([k,h])=>`<button type="button" class="chip" data-pre="${k}" aria-pressed="${pre===k}">${k}${h?`<small>${h}</small>`:""}</button>`).join("")}</div></div>
+    <div class="grid2">
+      <div class="fld"><label for="p-tag">Tag</label><input id="p-tag" value="${esc(p.tag||"")}" placeholder="UPS684 or free text" autocapitalize="characters" autocomplete="off"></div>
+      <div class="fld"><label for="p-num">Number</label><input id="p-num" value="${esc(num)}" inputmode="numeric" pattern="[0-9]*" placeholder="684" autocomplete="off"></div>
+    </div>
+    <div id="p-extra">${extraHtml(pre,x)}</div>`; }
+let lastGroup="";
+function partGroup(r,p){ const hit=PARTS.find(([g,items])=>items.includes(p.tag)); if (hit) return hit[0]; if (!r.photos.some(x=>x.tag==="Nameplate")) return "Unit"; return lastGroup||"Door boards"; }
+function itemsHtml(g,p){ const grp=PARTS.find(x=>x[0]===g)||PARTS[0]; return grp[1].map(t=>`<button type="button" class="chip" data-part="${esc(t)}" aria-pressed="${p.tag===t}">${esc(t)}</button>`).join(""); }
+function stripHtml(r,p){ return `
+    <div class="fld"><label>What is it? Pick a group, then the part</label>
+      <div class="chips" id="p-groups">${PARTS.map(([g])=>`<button type="button" class="chip" data-grp="${esc(g)}" aria-pressed="${g===partGroup(r,p)}">${esc(g)}</button>`).join("")}</div>
+      <div class="chips sm" id="p-items" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">${itemsHtml(partGroup(r,p),p)}</div></div>
+    <div class="grid2">
+      <div class="fld"><label for="p-tag">Part (or type your own)</label><input id="p-tag" value="${esc(p.tag||"")}" placeholder="Tap above or type" autocomplete="off"></div>
+      <div class="fld" ${p.closeup?"hidden":""}><label for="p-qty">Qty removed (one photo is enough)</label><div class="qty"><button type="button" class="btn ghost" data-q="-1" aria-label="One fewer">−</button><input id="p-qty" value="${esc(p.qty||1)}" inputmode="numeric" pattern="[0-9]*" autocomplete="off"><button type="button" class="btn ghost" data-q="1" aria-label="One more">+</button></div></div>
+    </div>
+    <div class="fld"><label for="p-cap">Note (optional)</label><textarea id="p-cap" placeholder="Only what the photo can't show: bad, burnt, cracked…">${esc(p.caption||"")}</textarea></div>`; }
+function extraHtml(pre,x){
+  if (pre==="MON") return `<div class="card" style="background:var(--info-bg);border-color:var(--info)"><b>Sensaphone Sentinel</b>
+    <div class="fld"><label for="x-mac">MAC address</label><input id="x-mac" data-x="mac" value="${esc(x.mac||"")}" autocapitalize="characters" autocomplete="off"></div>
+    <div class="fld"><label for="x-modem">Linked modem serial</label><input id="x-modem" data-x="modem_serial" value="${esc(x.modem_serial||"")}" autocapitalize="characters" autocomplete="off"></div></div>`;
+  if (pre==="CONT") return `<div class="card" style="background:var(--info-bg);border-color:var(--info)"><b>HVAC units on this controller</b>
+    <div class="grid2"><div class="fld"><label for="x-a">HVAC unit A</label><input id="x-a" data-x="hvac_a" value="${esc(x.hvac_a||"")}" placeholder="HVAC0xx" autocapitalize="characters" autocomplete="off"></div>
+    <div class="fld"><label for="x-b">HVAC unit B</label><input id="x-b" data-x="hvac_b" value="${esc(x.hvac_b||"")}" placeholder="blank if none" autocapitalize="characters" autocomplete="off"></div></div></div>`;
+  return "";
+}
+function readPhoto(p){ const c=$("p-cap"), t=$("p-tag"), q=$("p-qty"), bf=$("b-form"), bp=$("b-page"); if (c) p.caption=c.value.trim();
+  if (bf){ p.form=bf.value.trim().toUpperCase(); p.page=Math.max(1,parseInt(bp.value,10)||1); p.tag=btag(p);
+    const home=BINDER_PRESET.tabs.find(t=>t.f.some(f=>f[0]===p.form)); if (home && cur.f.preset!=="none") p.tab=home.t; } if (t) p.tag = cur.type==="strip" ? t.value.trim() : t.value.trim().toUpperCase(); if (q) p.qty=Math.max(1,parseInt(q.value,10)||1); }
+function curPhoto(){ return cur && cur.photos.find(p=>p.id===openPhoto); }
+function setTagFromParts(){ const p=curPhoto(); if (!p) return; const pre=(document.querySelector("#p-pre [aria-pressed='true']")||{}).dataset; const n=$("p-num").value.replace(/\D/g,"");
+  if (pre && pre.pre && n){ p.tag=pre.pre+n.padStart(3,"0"); $("p-tag").value=p.tag; } }
+async function closeSheet(){
+  if (draft){ /* form */ }
+  else if (openPhoto && cur){ const p=curPhoto(); if (p) readPhoto(p); await db.saveRep(cur); renderRep(); }
+  openPhoto=null; draft=null; $("sheet").hidden=true; document.body.style.overflow="";
+}
+$("sclose").addEventListener("click", closeSheet);
+$("sheet").addEventListener("click", async e=>{
+  if (e.target===$("sheet")) return closeSheet();
+  // form
+  if (draft){
+    const t=e.target.closest("[data-type]"); if (t){ readForm(); draft.r.type=t.dataset.type; if (t.dataset.type==="strip"){ if (!draft.r.f.actions) draft.r.f.actions="Strip for spares"; if (!draft.r.site) draft.r.site="Shop"; } if (t.dataset.type==="binder"){ if (!draft.r.asset) draft.r.asset="DYNASTY BINDER"; if (!draft.r.site) draft.r.site="Office"; } renderForm(); return; }
+    const d=e.target.closest("[data-dir]"); if (d){ readForm(); draft.r.dir=d.dataset.dir; renderForm(); return; }
+    const s=e.target.closest("[data-st]"); if (s){ readForm(); draft.r.siteType=s.dataset.st; renderForm(); return; }
+    const bp=e.target.closest("[data-bp]"); if (bp){ readForm(); draft.r.f.preset=bp.dataset.bp==="none"?"none":""; renderForm(); return; }
+    const fu=e.target.closest("[data-full]"); if (fu){ readForm(); draft.r.f.full=fu.dataset.full; renderForm(); return; }
+    const a=e.target.closest("[data-act]"); if (a){ readForm(); const set=new Set((draft.r.f.actions||"").split(", ").filter(Boolean)); set.has(a.dataset.act)?set.delete(a.dataset.act):set.add(a.dataset.act); draft.r.f.actions=ACTIONS.filter(x=>set.has(x)).join(", "); renderForm(); return; }
+    if (e.target.id==="saveForm"){ readForm(); const r=draft.r; ls.set("pr.tech",r.tech); ls.set("pr.site",r.site);
+      if (!r.asset && !r.site){ toast("Enter a trailer / asset or a site"); return; }
+      const wasEdit=draft.edit; await db.saveRep(r); cur=r; draft=null; $("sheet").hidden=true; document.body.style.overflow="";
+      if (wasEdit){ renderRep(); } else { show("report"); renderRep(); toast("Report started. Tap Take photo."); } }
+    return;
+  }
+  const p=curPhoto(); if (!p) return;
+  if (e.target.closest("#prev")){ $("prev").classList.toggle("zoom"); return; }
+  if (e.target.closest("#b-skipdoc")||e.target.closest("#b-prevdoc")){ readPhoto(p); const tb=tabOf(p.tab); if (!tb) return; const i=bIdx(tb,p.form), j=e.target.closest("#b-skipdoc")?i+1:i-1; if (j<0||j>=tb.f.length) return;
+    p.form=tb.f[j][0]; p.page=1; p.tag=btag(p); await db.saveRep(cur); openPhotoSheet(p.id); toast("This photo → "+p.form+" page 1"); return; }
+  const bt=e.target.closest("[data-btab]");
+  if (bt){ p.tab=bt.dataset.btab; document.querySelectorAll("[data-btab]").forEach(b=>b.setAttribute("aria-pressed", b===bt)); const tb=tabOf(p.tab); $("b-tabname").textContent=p.tab; $("b-tabsd").open=false; $("b-formsfld").hidden=!tb; $("b-forms").innerHTML=tb?formsHtml(tb,p):""; await db.saveRep(cur); openPhotoSheet(p.id); return; }
+  const bfm=e.target.closest("[data-bform]");
+  if (bfm){ $("b-form").value=bfm.dataset.bform; readPhoto(p); await db.saveRep(cur); openPhotoSheet(p.id); return; }
+  const bq=e.target.closest("[data-bq]");
+  if (bq){ const q=$("b-page"); q.value=Math.max(1,(parseInt(q.value,10)||1)+(+bq.dataset.bq)); readPhoto(p); await db.saveRep(cur); return; }
+  const bfl=e.target.closest("[data-bflag]");
+  if (bfl){ const set=new Set(p.flags||[]); set.has(bfl.dataset.bflag)?set.delete(bfl.dataset.bflag):set.add(bfl.dataset.bflag); p.flags=BFLAGS.map(x=>x[0]).filter(k=>set.has(k)); bfl.setAttribute("aria-pressed", set.has(bfl.dataset.bflag)); await db.saveRep(cur); return; }
+  const qb=e.target.closest("[data-q]");
+  if (qb){ const q=$("p-qty"); q.value=Math.max(1,(parseInt(q.value,10)||1)+(+qb.dataset.q)); p.qty=+q.value; await db.saveRep(cur); return; }
+  const gb=e.target.closest("[data-grp]");
+  if (gb){ lastGroup=gb.dataset.grp; document.querySelectorAll("[data-grp]").forEach(b=>b.setAttribute("aria-pressed", b===gb)); $("p-items").innerHTML=itemsHtml(gb.dataset.grp,p); return; }
+  const pc=e.target.closest("[data-part]");
+  if (pc){ document.querySelectorAll("[data-part]").forEach(b=>b.setAttribute("aria-pressed", b===pc)); $("p-tag").value=pc.dataset.part; p.tag=pc.dataset.part; lastGroup=(PARTS.find(x=>x[1].includes(pc.dataset.part))||[""])[0]; await db.saveRep(cur); return; }
+  const c=e.target.closest("[data-pre]");
+  if (c){ document.querySelectorAll("#p-pre .chip").forEach(b=>b.setAttribute("aria-pressed", b===c)); setTagFromParts(); $("p-extra").innerHTML=extraHtml(c.dataset.pre, cur.assets[p.tag]||{}); if (!$("p-num").value) $("p-num").focus(); await db.saveRep(cur); return; }
+  const i=cur.photos.indexOf(p);
+  if (e.target.id==="p-prev"||e.target.id==="p-next"){ readPhoto(p); await db.saveRep(cur);
+    const j=(i+(e.target.id==="p-next"?1:-1)+cur.photos.length)%cur.photos.length; openPhotoSheet(cur.photos[j].id); return; }
+  if (e.target.id==="p-del"){ $("p-delask").hidden=false; return; }
+  if (e.target.id==="p-delyes"){ cur.photos.splice(i,1); await db.delBlob(p.id); await db.saveRep(cur); openPhoto=null; $("sheet").hidden=true; document.body.style.overflow=""; renderRep(); toast("Photo deleted"); }
+});
+$("sheet").addEventListener("input", e=>{
+  if (draft) return; const p=curPhoto(); if (!p) return;
+  if (e.target.id==="p-num") setTagFromParts();
+  if (e.target.dataset && e.target.dataset.x){ e.target.value=e.target.value.toUpperCase(); const tag=$("p-tag").value.trim().toUpperCase(); if (!tag) return;
+    cur.assets[tag]=Object.assign({}, cur.assets[tag]||{}, {[e.target.dataset.x]:e.target.value.trim()}); db.saveRep(cur); }
+});
+$("sheet").addEventListener("change", async e=>{
+  if (draft) return; const p=curPhoto(); if (!p) return;
+  if (e.target.id==="p-retake"){ const f=e.target.files[0]; if (!f) return; const pr=await prepare(f, prepOpt()); await db.putBlob(p.id,pr.blob); urls.delete(p.id); p.q=pr.q; p.at=Date.now(); p.sent=0; await db.saveRep(cur); openPhotoSheet(p.id); }
+  if (e.target.id==="b-next"||e.target.id==="b-newdoc"){ readPhoto(p); await db.saveRep(cur); const fs=e.target.files; if (!fs.length) return;
+    const nd=e.target.id==="b-newdoc"; const nx=nd&&cur.f.preset!=="none"?bNext(tabOf(p.tab),p.form):null; await addFiles(fs,"",false,{tab:p.tab, form:nd?(nx?nx[0]:""):p.form, page:nd?1:(p.page||1)+1});
+    const last=cur.photos[cur.photos.length-1]; if (last) openPhotoSheet(last.id); if (nd && !nx) setTimeout(()=>{ const el=$("b-form"); if (el) el.focus(); },50); return; }
+  if (e.target.id==="p-next-shot"){ readPhoto(p); await db.saveRep(cur); const fs=e.target.files; if (!fs.length) return; await addFiles(fs,""); const last=cur.photos[cur.photos.length-1]; if (last) openPhotoSheet(last.id); return; }
+  if (e.target.id==="p-more"){ readPhoto(p); const n=await addFiles(e.target.files, p.tag, cur.type==="strip"); toast(`Added ${n} photo${n===1?"":"s"}${p.tag?" to "+p.tag:""}`); openPhotoSheet(p.id); }
+});
+
+// ---------- adding photos ----------
+const prepOpt = () => cur && cur.type==="binder" ? {full:cur.f.full==="1", edges:true} : {};
+async function addFiles(list, tag, closeup, bind){
+  const fs=[...list]; let n=0; let last=null;
+  for (const f of fs){ let pr; try{ pr=await prepare(f, prepOpt()); }catch(_){ toast("Couldn't open a photo"); continue; }
+    const id=uid(); await db.putBlob(id, pr.blob); const ph={id, at:Date.now(), caption:"", tag:tag||"", q:pr.q, w:pr.w, h:pr.h, sent:0}; if (closeup) ph.closeup=true;
+    if (cur.type==="binder"){ const b=bind||{}; ph.tab=b.tab||""; ph.form=b.form||""; ph.page=(b.page||1)+n; ph.flags=[]; ph.tag=btag(ph); }
+    cur.photos.push(ph); last=ph; n++; }
+  await db.saveRep(cur); renderRep(); return n;
+}
+$("cam").addEventListener("change", async e=>{ const fs=e.target.files; if (!fs.length) return; const lp=cur.photos[cur.photos.length-1];
+  await addFiles(fs, cur.type==="strip" && !cur.photos.some(p=>p.tag==="Nameplate") ? "Nameplate" : "", false, cur.type==="binder"&&lp?{tab:lp.tab, form:lp.form, page:(lp.page||1)+1}:null); e.target.value=""; const last=cur.photos[cur.photos.length-1]; if (last) openPhotoSheet(last.id); });
+$("gal").addEventListener("change", async e=>{ const fs=e.target.files; if (!fs.length) return; const n=await addFiles(fs,""); e.target.value=""; toast(`Added ${n} photo${n===1?"":"s"}. Tap one to caption it.`); });
+
+// ---------- report data ----------
+function reportData(r, photos, sendNo){
+  return {format:"SurePower.PhotoReport.v1", app_version:VERSION, report_id:r.id, type:r.type, type_name:TYPES[r.type].name, direction:r.type==="handoff"?(r.dir==="in"?"return":"delivery"):undefined,
+    asset:r.asset, site:r.site, job:r.job, tech:r.tech, site_type:r.type==="asset"?r.siteType:undefined, fields:r.f, notes:r.notes,
+    send_number:sendNo, sent_at:new Date().toISOString(), photos_in_this_send:photos.length, photos_total:r.photos.length, linked_assets:r.assets,
+    binder:r.type==="binder"?{name:r.asset, tab_list:r.f.preset==="none"?"none":BINDER_PRESET.name, full_resolution:r.f.full==="1"}:undefined,
+    photos:photos.map((p,i)=>({n:i+1, file:fileFor(p,i), tag:p.tag, qty:r.type==="strip"?(p.closeup?0:(p.qty||1)):undefined, closeup:p.closeup||undefined,
+      tab:r.type==="binder"?(p.tab||""):undefined, form:r.type==="binder"?(p.form||""):undefined, page:r.type==="binder"?(p.page||1):undefined, flags:r.type==="binder"?(p.flags||[]):undefined,
+      width:p.w, height:p.h, caption:p.caption, taken:new Date(p.at).toISOString(), quality:p.q}))};
+}
+const safe = s => String(s||"").trim().replace(/[\\/:*?"<>|]+/g,"").replace(/\s+/g," ").slice(0,60);
+function fileFor(p,i){ return `${String(i+1).padStart(3,"0")}_${(p.tag||"photo").replace(/[^A-Za-z0-9_-]+/g,"_")}.jpg`; }
+function baseName(r, sendNo){ return safe(`${r.asset||r.site} ${TYPES[r.type].short}${r.type==="handoff"&&r.dir==="in"?" Return":""} ${today()}${sendNo>1?" ("+sendNo+")":""}`); }
+
+// ---------- PDF (built on the phone, photos + captions + embedded JSON) ----------
+function pdfText(s){ return String(s??"").normalize("NFKD").replace(/[^\x20-\x7E]/g,"").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)"); }
+function wrap(s, max){ const out=[]; String(s||"").split(/\n/).forEach(par=>{ let line=""; par.split(/\s+/).forEach(w=>{ if ((line+" "+w).trim().length>max){ if (line) out.push(line); line=w; } else line=(line+" "+w).trim(); }); out.push(line); }); return out; }
+async function jpegBytes(p){ const b=await db.getBlob(p.id); return new Uint8Array(await b.arrayBuffer()); }
+async function buildPdf(r, photos, data){
+  const enc=new TextEncoder(); const parts=[]; let len=0; const offs=[];
+  const push=x=>{ const u=typeof x==="string"?enc.encode(x):x; parts.push(u); len+=u.length; };
+  let n=0; const alloc=()=>++n;
+  const writeObj=(id,body)=>{ offs[id]=len; push(`${id} 0 obj\n`); body(); push("\nendobj\n"); };
+  const W=612,H=792,M=40;
+  const catalog=alloc(), pagesId=alloc(), font=alloc(), fontB=alloc(), ef=alloc(), fspec=alloc();
+  const pageIds=[];
+  push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+  writeObj(font,()=>push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"));
+  writeObj(fontB,()=>push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"));
+  const json=enc.encode(JSON.stringify(data,null,2));
+  writeObj(ef,()=>{ push(`<< /Type /EmbeddedFile /Subtype /application#2Fjson /Length ${json.length} >>\nstream\n`); push(json); push("\nendstream"); });
+  writeObj(fspec,()=>push(`<< /Type /Filespec /F (report.json) /UF (report.json) /EF << /F ${ef} 0 R >> /Desc (Photo Report data for the office) >>`));
+  const page=(content, xobj)=>{ const pid=alloc(), cid=alloc(); pageIds.push(pid);
+    const c=enc.encode(content);
+    writeObj(cid,()=>{ push(`<< /Length ${c.length} >>\nstream\n`); push(c); push("\nendstream"); });
+    writeObj(pid,()=>push(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 ${font} 0 R /F2 ${fontB} 0 R >>${xobj?` /XObject << /Im1 ${xobj} 0 R >>`:""} >> /Contents ${cid} 0 R >>`)); };
+  const txt=(x,y,size,s,bold)=>`BT /${bold?"F2":"F1"} ${size} Tf ${x} ${y} Td (${pdfText(s)}) Tj ET\n`;
+  // cover page
+  const T=TYPES[r.type]; let y=H-M-10; let c="";
+  c+=`0.106 0.184 0.294 rg 0 ${H-96} ${W} 96 re f 1 1 1 rg\n`;
+  c+=txt(M,H-50,22,"SURE POWER  PHOTO REPORT",true); c+=txt(M,H-74,12,`${T.name}${r.type==="handoff"?" - "+(r.dir==="in"?"Return":"Delivery"):""}   |   Send ${data.send_number}   |   ${today()}`);
+  c+="0 0 0 rg\n"; y=H-130;
+  const rows=[[r.type==="strip"?"UPS asset":"Trailer / asset",r.asset],["Site",r.site],["Job #",r.job],["Tech",r.tech]].concat(T.fields.map(([k,l])=>[l,r.f[k]])).concat([["Photos in this send",`${photos.length} of ${r.photos.length}`]]);
+  rows.forEach(([l,v])=>{ if (!v) return; c+=txt(M,y,10,l.toUpperCase(),true); wrap(v,70).forEach((ln,j)=>{ c+=txt(M+150,y-j*14,11,ln); }); y-=Math.max(1,wrap(v,70).length)*14+6; });
+  if (r.type==="asset"){ const tags=[...new Set(photos.map(p=>p.tag).filter(Boolean))]; if (tags.length){ y-=6; c+=txt(M,y,10,"ASSETS IN THIS SEND",true); wrap(tags.join(", "),80).forEach((ln,j)=>{ c+=txt(M+150,y-j*14,11,ln); }); y-=wrap(tags.join(", "),80).length*14+6; } }
+  if (r.type==="strip"){ const sum={}; photos.forEach(p=>{ if (p.tag&&!p.closeup&&p.tag!=="Nameplate"&&p.tag!=="Whole unit") sum[p.tag]=(sum[p.tag]||0)+(p.qty||1); }); const keys=Object.keys(sum);
+    c+=txt(M,y,10,"ACTION",true); c+=txt(M+150,y,11,r.f.actions||"-"); y-=20;
+    if (keys.length){ c+=txt(M,y,10,"PARTS PHOTOGRAPHED",true); keys.slice(0,26).forEach((k,j)=>{ c+=txt(M+150,y-j*14,11,`${sum[k]} x ${k}`); }); y-=Math.min(keys.length,26)*14+6; } }
+  if (r.notes){ y-=8; c+=txt(M,y,10,"NOTES",true); y-=16; wrap(r.notes,95).slice(0,30).forEach(ln=>{ c+=txt(M,y,11,ln); y-=14; }); }
+  y-=10; c+=txt(M,Math.max(y,60),9,"Each following page is one photo with its tag, caption and time. Report data (report.json) is attached to this PDF for the office AI.");
+  c+=txt(M,30,8,`Photo Report v${VERSION}  |  report ${r.id}`);
+  page(c,null);
+  // photo pages
+  for (let i=0;i<photos.length;i++){ const p=photos[i]; const bytes=await jpegBytes(p); const im=alloc();
+    writeObj(im,()=>{ push(`<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`); push(bytes); push("\nendstream"); });
+    const capLines=wrap(p.caption||"",95).slice(0,6); const top=H-M-34; const bottom=M+20+capLines.length*14;
+    const maxW=W-2*M, maxH=top-bottom-10; const sc=Math.min(maxW/p.w, maxH/p.h); const iw=p.w*sc, ih=p.h*sc; const ix=(W-iw)/2, iy=top-ih;
+    let pc=txt(M,H-M-14,14,`${i+1}.  ${p.tag||"Photo"}${p.closeup?"  (close-up)":r.type==="strip"&&(p.qty||1)>1?"  x"+p.qty:""}`,true)+txt(W-M-150,H-M-14,9,stamp(p.at));
+    pc+=`q ${iw.toFixed(2)} 0 0 ${ih.toFixed(2)} ${ix.toFixed(2)} ${iy.toFixed(2)} cm /Im1 Do Q\n`;
+    let cy=iy-18; capLines.forEach(ln=>{ pc+=txt(M,cy,11,ln); cy-=14; });
+    if (p.q && !p.q.ok) pc+=txt(M,Math.max(cy,30),8,"Phone check: "+p.q.issues.join("; "));
+    pc+=txt(M,22,8,`${baseName(r,data.send_number)}  |  photo ${i+1} of ${photos.length}`);
+    page(pc,im); }
+  writeObj(pagesId,()=>push(`<< /Type /Pages /Kids [${pageIds.map(id=>id+" 0 R").join(" ")}] /Count ${pageIds.length} >>`));
+  writeObj(catalog,()=>push(`<< /Type /Catalog /Pages ${pagesId} 0 R /Names << /EmbeddedFiles << /Names [(report.json) ${fspec} 0 R] >> >> /PageMode /UseAttachments >>`));
+  const xref=len; let x=`xref\n0 ${n+1}\n0000000000 65535 f \n`; for (let i=1;i<=n;i++) x+=String(offs[i]||0).padStart(10,"0")+" 00000 n \n";
+  push(x+`trailer\n<< /Size ${n+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts,{type:"application/pdf"});
+}
+
+// ---------- HTML report (self-contained, photos embedded) ----------
+const b64 = blob => new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(blob); });
+async function buildHtml(r, photos, data){
+  const T=TYPES[r.type]; const imgs=[]; for (const p of photos){ imgs.push(await b64(await db.getBlob(p.id))); }
+  const rows=[[r.type==="strip"?"UPS asset":"Trailer / asset",r.asset],["Site",r.site],["Job #",r.job],["Tech",r.tech]].concat(T.fields.map(([k,l])=>[l,r.f[k]])).concat(r.type==="strip"?[["Action",r.f.actions]]:[]).filter(x=>x[1]);
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(baseName(r,data.send_number))}</title>
+<style>:root{--bg:#eef1f5;--card:#fff;--ink:#14202e;--muted:#566377;--line:#c3ccd8;--navy:#1b2f4b;--amber:#c77700;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f151d;--card:#17202b;--ink:#e6ebf1;--muted:#9aa7b8;--line:#2f3c4c;--navy:#0a1220;--amber:#f0a43a;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#f2f5f9;padding:18px max(16px,env(safe-area-inset-left))}header h1{margin:0;font:700 26px/1.1 "Arial Narrow",Arial,sans-serif;text-transform:uppercase}header p{margin:4px 0 0;color:#a9bad0;font-size:14px}
+main{max-width:900px;margin:0 auto;padding:14px 16px 40px;display:grid;gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+table{border-collapse:collapse;width:100%}td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}td:first-child{color:var(--muted);width:40%;font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}figure img{display:block;width:100%}figcaption{padding:10px 14px;display:grid;gap:3px}
+figcaption b{font-size:18px}.m{color:var(--muted);font-size:13px}.notes{white-space:pre-wrap}</style></head><body>
+<header><h1>Sure Power Photo Report</h1><p>${esc(T.name)}${r.type==="handoff"?" · "+(r.dir==="in"?"Return":"Delivery"):""} · send ${data.send_number} · ${esc(today())}</p></header>
+<main><div class="card"><table>${rows.map(([l,v])=>`<tr><td>${esc(l)}</td><td>${esc(v)}</td></tr>`).join("")}<tr><td>Photos</td><td>${photos.length} in this send, ${r.photos.length} in the report</td></tr></table></div>
+${r.notes?`<div class="card"><b>Notes</b><div class="notes">${esc(r.notes)}</div></div>`:""}
+${photos.map((p,i)=>`<figure><img src="${imgs[i]}" alt="${esc(p.tag||"Photo "+(i+1))}"><figcaption><b>${i+1}. ${esc(p.tag||"Photo")}${r.type==="binder"&&p.tab?" · "+esc(p.tab):""}${r.type==="binder"&&(p.flags||[]).length?" · "+esc(p.flags.join(", ")):""}${p.closeup?" (close-up)":r.type==="strip"&&(p.qty||1)>1?" ×"+p.qty:""}</b>${p.caption?`<span>${esc(p.caption)}</span>`:""}<span class="m">${esc(stamp(p.at))}${p.q&&!p.q.ok?" · phone check: "+esc(p.q.issues.join("; ")):""}</span></figcaption></figure>`).join("")}
+<p class="m">Photo Report v${esc(VERSION)} · report ${esc(r.id)}</p></main>
+<script type="application/json" id="report-data">${JSON.stringify(data).replace(/</g,"\\u003c")}<\/script></body></html>`;
+}
+
+// ---------- send ----------
+let sendMode="new";
+function openSend(){
+  const r=cur; if (!r.photos.length){ toast("Take at least one photo first"); return; }
+  const unsent=r.photos.filter(p=>!p.sent).length; sendMode = unsent && r.sends.length ? "new" : "all";
+  openPhoto=null; draft=null; $("stitle").textContent="Send report"; renderSend(); $("sheet").hidden=false; document.body.style.overflow="hidden";
+}
+function renderSend(){
+  const r=cur, unsent=r.photos.filter(p=>!p.sent).length, no=r.sends.length+1;
+  const untagged = (r.type==="asset"||r.type==="strip") ? r.photos.filter(p=>!p.tag).length : 0;
+  const noPlate = r.type==="strip" && !r.photos.some(p=>p.tag==="Nameplate");
+  $("sbody").innerHTML = `
+    ${r.sends.length?`<div class="banner">Sent ${r.sends.length} time${r.sends.length>1?"s":""} so far. This will be send #${no}.</div>`:""}
+    ${untagged?`<div class="banner bad">${untagged} photo${untagged>1?"s have":" has"} no ${r.type==="strip"?"part":"asset"} tag.</div>`:""}
+    ${noPlate?`<div class="banner bad">No nameplate photo. The office needs it to identify the unit.</div>`:""}
+    <div class="fld"><label>What to send</label>
+      <button type="button" class="sendopt" data-mode="new" aria-pressed="${sendMode==="new"}" ${unsent?"":"disabled style='opacity:.5'"}><b>New photos only (${unsent})</b><span class="small muted">Everything since the last send.</span></button>
+      <button type="button" class="sendopt" data-mode="all" aria-pressed="${sendMode==="all"}"><b>Whole report (${r.photos.length})</b><span class="small muted">All photos so far, for a complete copy.</span></button></div>
+    <p class="small muted" style="margin:0">File name: <b>${esc(baseName(r,no))}</b></p>
+    <button class="btn ok wide" type="button" id="doShare" style="min-height:52px">${r.type==="binder"?"Share HTML (pick Google Drive)":"Share PDF + HTML (email, text, Drive)"}</button>
+    ${r.type==="binder"?`<p class="small muted" style="margin:0">Binder reports send <b>HTML only</b>: it holds every page photo plus report.json, at about half the size. Save PDF is still there if you want one.</p>`:""}
+    <div class="grid2"><button class="btn ghost" type="button" id="doPdf">Save PDF</button><button class="btn ghost" type="button" id="doHtml">Save HTML</button></div>
+    <p class="small muted" style="margin:0"><b>PDF</b> goes in the rental database. <b>HTML</b> opens nicely on phones and is what the office AI reads best. Both hold the same photos and notes.</p>
+    <div id="sendnote" class="small muted"></div>`;
+}
+async function makeFiles(){
+  const r=cur, no=r.sends.length+1; const photos = sendMode==="new" ? r.photos.filter(p=>!p.sent) : r.photos.slice();
+  if (!photos.length) throw new Error("nothing");
+  const data=reportData(r,photos,no); const name=baseName(r,no);
+  $("sendnote").textContent="Building files…";
+  const html=new Blob([await buildHtml(r,photos,data)],{type:"text/html"}); const pdf = r.type==="binder" ? null : await buildPdf(r,photos,data);
+  return {no, photos, name, pdf, html};
+}
+async function markSent(f, how){
+  f.photos.forEach(p=>{ if (!p.sent) p.sent=f.no; }); cur.sends.push({n:f.no, at:Date.now(), mode:sendMode, photos:f.photos.length, how});
+  await db.saveRep(cur); renderRep();
+}
+function saveBlob(blob,name){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),60000); }
+$("sheet").addEventListener("click", async e=>{
+  const m=e.target.closest("[data-mode]"); if (m && !m.disabled){ sendMode=m.dataset.mode; renderSend(); return; }
+  try{
+    if (e.target.id==="doShare"){
+      const f=await makeFiles();
+      const files = cur.type==="binder" ? [new File([f.html],f.name+".html",{type:"text/html"})] : [new File([f.pdf],f.name+".pdf",{type:"application/pdf"}), new File([f.html],f.name+".html",{type:"text/html"})];
+      if (navigator.canShare && navigator.canShare({files})){ await navigator.share({files, title:f.name, text:`${f.name}: ${f.photos.length} photo${f.photos.length===1?"":"s"}`}); await markSent(f,"share"); closeSheet(); toast(`Send #${f.no} shared`); }
+      else if (cur.type!=="binder" && navigator.canShare && navigator.canShare({files:[files[0]]})){ await navigator.share({files:[files[0]], title:f.name}); await markSent(f,"share-pdf"); closeSheet(); toast(`Send #${f.no} shared (PDF only on this phone)`); }
+      else { $("sendnote").textContent="This phone can't share files from here. Use Save PDF and Save HTML, then attach them."; }
+    }
+    if (e.target.id==="doPdf"||e.target.id==="doHtml"){
+      const f=await makeFiles(); if (e.target.id==="doPdf" && !f.pdf) f.pdf=await buildPdf(cur,f.photos,reportData(cur,f.photos,f.no)); if (e.target.id==="doPdf") saveBlob(f.pdf,f.name+".pdf"); else saveBlob(f.html,f.name+".html");
+      await markSent(f, e.target.id==="doPdf"?"save-pdf":"save-html"); renderSend(); $("sendnote").textContent=`Saved ${f.name}${e.target.id==="doPdf"?".pdf":".html"} (${(((e.target.id==="doPdf")?f.pdf:f.html).size/1e6).toFixed(1)} MB). Marked as send #${f.no}.`;
+    }
+  }catch(err){ if (err && err.name==="AbortError"){ $("sendnote").textContent="Share cancelled. Nothing was marked as sent."; } else if (err && err.message==="nothing"){ $("sendnote").textContent="No new photos since the last send. Pick Whole report."; } else { $("sendnote").textContent="Couldn't build the files: "+((err&&err.message)||"error"); } }
+});
+$("send").addEventListener("click", openSend);
+
+// ---------- finish ----------
+// Clearing is a soft delete: the report is hidden and kept KEEP_MS, then purged at app start.
+const KEEP_MS = 7*864e5;
+function finishState(r){
+  const unsent=r.photos.filter(p=>!p.sent).length, last=r.sends.length?r.sends[r.sends.length-1].at:0;
+  const notesUnsent = !!(r.notes && r.notes.trim() && (!last || (r.notesAt||0)>last));
+  return {unsent, notesUnsent, neverSent:!r.sends.length, ok: r.photos.length>0 && !unsent && !notesUnsent};
+}
+function openFinish(){
+  const r=cur, s=finishState(r); openPhoto=null; draft=null;
+  $("stitle").textContent="Clear this report?";
+  const warn=[]; if (s.neverSent && r.photos.length) warn.push("This report has <b>never been sent</b>.");
+  else if (s.unsent) warn.push(`<b>${s.unsent} photo${s.unsent>1?"s were":" was"} never sent</b> to the office.`);
+  if (s.notesUnsent) warn.push("The <b>notes changed</b> after the last send.");
+  $("sbody").innerHTML = (s.ok ? `<div class="banner" style="background:var(--ok-bg)"><b>Everything has been sent.</b> All ${r.photos.length} photos went out in ${r.sends.length} send${r.sends.length>1?"s":""}.</div>`
+    : `<div class="banner bad" style="font-size:16px"><b style="font-size:18px">Stop: not everything was sent.</b><br>${warn.join("<br>")||"There are no photos in this report."}</div>
+       ${r.photos.length?`<button class="btn ok wide" type="button" id="fin-send" style="min-height:52px">Send it now</button>`:""}`)
+    + `<p class="small" style="margin:0">Clearing takes <b>${esc(repTitle(r))}</b> off the list. It stays in <b>Cleared reports</b> on the home screen for 7 days, where you can restore it, then it is deleted for good.</p>
+    ${s.ok?"":`<label class="small" style="display:flex;gap:12px;align-items:center;background:var(--plate);border:1px solid var(--line);border-radius:10px;padding:12px"><input type="checkbox" id="fin-ok" style="width:24px;height:24px;flex:none"> <span>I understand the office does not have everything from this report.</span></label>`}
+    <button class="btn bad wide" type="button" id="fin-yes" ${s.ok?"":"disabled style='opacity:.45'"}>Clear report</button>
+    <button class="btn ghost wide" type="button" id="fin-no">Keep it</button>`;
+  $("sheet").hidden=false; document.body.style.overflow="hidden";
+}
+$("finish").addEventListener("click", openFinish);
+$("sheet").addEventListener("change", e=>{ if (e.target.id==="fin-ok"){ const b=$("fin-yes"); b.disabled=!e.target.checked; b.style.opacity=e.target.checked?"1":".45"; } });
+$("sheet").addEventListener("click", async e=>{
+  if (e.target.id==="fin-no") return closeSheet();
+  if (e.target.id==="fin-send") return openSend();
+  if (e.target.id==="fin-yes" && !e.target.disabled){ cur.cleared=Date.now(); await db.saveRep(cur); cur=null; $("sheet").hidden=true; document.body.style.overflow=""; show("home"); toast("Report cleared. Restore it from Cleared reports for 7 days.",4500); }
+});
+$("cleared").addEventListener("click", async e=>{
+  const b=e.target.closest("[data-restore]"); if (!b) return;
+  const r=(await db.allReps()).find(x=>x.id===b.dataset.restore); if (!r) return;
+  delete r.cleared; await db.saveRep(r); renderHome(); toast("Report restored");
+});
+async function purgeCleared(){
+  for (const r of await db.allReps()) if (r.cleared && Date.now()-r.cleared>KEEP_MS){ for (const p of r.photos) await db.delBlob(p.id); await db.delRep(r.id); }
+}
+
+// ---------- install hint + boot ----------
+function installHint(){
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (standalone || ls.get("pr.hintDone","")) return;
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  $("installHint").innerHTML = (ios?"<b>Install it:</b> tap the Share button in Safari, then <b>Add to Home Screen</b>. It will then open without signal."
+    :"<b>Install it:</b> open Chrome's ⋮ menu and tap <b>Add to Home screen</b> or <b>Install app</b>. It will then open without signal.")+` <button class="btn ghost" type="button" id="hintOk" style="min-height:34px;padding:4px 10px;margin-left:6px">OK</button>`;
+  $("installHint").hidden=false; $("hintOk").onclick=()=>{ ls.set("pr.hintDone","1"); $("installHint").hidden=true; };
+}
+(async ()=>{
+  idb=await openDB();
+  if (idb){ persistent=true; try{ if (navigator.storage&&navigator.storage.persist) await navigator.storage.persist(); }catch(_){} }
+  $("storeWarn").hidden=persistent;
+  try{ await purgeCleared(); }catch(_){}
+  installHint(); show("home");
+  if ("serviceWorker" in navigator && window.isSecureContext && location.protocol!=="file:"){
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      reg.addEventListener("updatefound",()=>{ const w=reg.installing; w && w.addEventListener("statechange",()=>{ if (w.state==="installed" && navigator.serviceWorker.controller) toast("App updated. Close and reopen to use the new version.",6000); }); });
+    }).catch(()=>{});
+  }
+})();
+})();
+</script>
+</body>
+</html>
